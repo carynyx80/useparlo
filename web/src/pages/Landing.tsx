@@ -46,12 +46,7 @@ function HeroChart() {
   }, [])
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 40, scale: 0.97 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 1, ease, delay: 0.25 }}
-      style={{ position: 'relative' }}
-    >
+    <div className="rise" style={{ position: 'relative', animationDelay: '200ms', animationDuration: '0.9s' }}>
       <div className="glass chart-card">
         <div className="chart-head">
           <div>
@@ -84,7 +79,7 @@ function HeroChart() {
         <span className="ic"><Flame size={15} /></span>
         <div><div style={{ fontWeight: 600 }} className="mono">+312.40 USDT</div><div className="muted" style={{ fontSize: 12 }}>Shielded PnL · 12x</div></div>
       </motion.div>
-    </motion.div>
+    </div>
   )
 }
 
@@ -96,32 +91,28 @@ function Hero() {
       <div className="grid-bg" />
       <div className="container hero-grid">
         <div>
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease }}>
+          <div className="rise" style={{ animationDelay: '0ms' }}>
             <span className="pill"><span className="pill-tag">New</span> Attention perps, live on BNB Chain</span>
-          </motion.div>
+          </div>
           <h1 className="display">
             {['Trade', 'the'].map((w, i) => (
-              <motion.span key={w} style={{ display: 'inline-block', marginRight: '0.22em' }}
-                initial={{ opacity: 0, y: 40, filter: 'blur(8px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                transition={{ duration: 0.9, ease, delay: 0.1 + i * 0.08 }}>{w}</motion.span>
+              <span key={w} className="rise-word" style={{ marginRight: '0.22em', animationDelay: `${60 + i * 80}ms` }}>{w}</span>
             ))}
             <br />
-            <motion.span className="accent" style={{ display: 'inline-block' }}
-              initial={{ opacity: 0, y: 40, filter: 'blur(8px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              transition={{ duration: 0.9, ease, delay: 0.28 }}>hype.</motion.span>
+            <span className="accent rise-word" style={{ animationDelay: '220ms' }}>hype.</span>
           </h1>
-          <motion.p className="hero-sub" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease, delay: 0.4 }}>
+          <p className="hero-sub rise" style={{ animationDelay: '340ms' }}>
             Go long or short on what Crypto Twitter is talking about. <strong>Up to 20x. Fully private.</strong>
-          </motion.p>
-          <motion.div className="hero-ctas" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease, delay: 0.5 }}>
+          </p>
+          <div className="hero-ctas rise" style={{ animationDelay: '440ms' }}>
             <Link to="/app" className="btn btn-primary">Launch app <ArrowRight size={17} /></Link>
             <a href="#how" className="btn btn-ghost">How it works</a>
-          </motion.div>
-          <motion.div className="hero-stats" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.75 }}>
+          </div>
+          <div className="hero-stats rise" style={{ animationDelay: '560ms' }}>
             <div><div className="v">20x</div><div className="l">Max leverage</div></div>
             <div><div className="v">0.1%</div><div className="l">Open fee</div></div>
             <div><div className="v">ZK</div><div className="l">Groth16 privacy</div></div>
-          </motion.div>
+          </div>
         </div>
         <HeroChart />
       </div>
