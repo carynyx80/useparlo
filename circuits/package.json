@@ -1,0 +1,21 @@
+{
+  "name": "circuits",
+  "version": "1.0.0",
+  "description": "Parlo ZK circuits (Circom 2 / Groth16)",
+  "main": "js/index.mjs",
+  "scripts": {
+    "build": "./build.sh",
+    "test": "node --test --test-concurrency=1 test/*.test.mjs",
+    "fixtures": "node test/fixtures.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "circom2": "^0.2.23",
+    "circomlib": "^2.0.5",
+    "circomlibjs": "^0.1.7",
+    "poseidon-solidity": "^0.0.5",
+    "snarkjs": "^0.7.5"
+  }
+}
