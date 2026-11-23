@@ -8,7 +8,7 @@ export function Logo() {
     <Link to="/" className="logo" aria-label="Parlo home">
       <span className="logo-mark">
         <svg width="18" height="18" viewBox="0 0 32 32" aria-hidden>
-          <path d="M5 23 L12 14 L18 19 L27 8" stroke="#C6FF3D" strokeWidth="3.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M5 23 L12 14 L18 19 L27 8" stroke="#FFFFFF" strokeWidth="3.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </span>
       Parlo

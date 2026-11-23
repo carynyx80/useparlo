@@ -12,13 +12,13 @@ import { wagmiConfig, TARGET_CHAIN } from './lib/wagmi'
 const queryClient = new QueryClient()
 
 const theme = darkTheme({
-  accentColor: '#C6FF3D',
-  accentColorForeground: '#0B0D05',
+  accentColor: '#FFFFFF',
+  accentColorForeground: '#000000',
   borderRadius: 'large',
   fontStack: 'system',
   overlayBlur: 'small',
 })
-theme.colors.modalBackground = '#0E1014'
+theme.colors.modalBackground = '#0A0A0A'
 theme.colors.connectButtonBackground = 'rgba(255,255,255,0.06)'
 theme.fonts.body = "'Inter', system-ui, sans-serif"
 

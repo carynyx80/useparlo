@@ -22,7 +22,7 @@ export default function App() {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <span
-                      style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid rgba(198,255,61,0.25)', borderTopColor: '#C6FF3D', animation: 'parlo-spin 0.8s linear infinite' }}
+                      style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.25)', borderTopColor: '#FFFFFF', animation: 'parlo-spin 0.8s linear infinite' }}
                     />
                     Loading Parlo trading…
                   </div>

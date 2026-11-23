@@ -152,7 +152,7 @@ export default function TradeApp() {
         <div className="container" style={{ maxWidth: 1480 }}>
           {wrongNetwork && (
             <div className="banner warn">
-              <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}><AlertTriangle size={16} color="#FF5C7A" /> You’re on the wrong network. Parlo runs on {TARGET_CHAIN.name}.</span>
+              <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}><AlertTriangle size={16} color="#7D7D7D" /> You’re on the wrong network. Parlo runs on {TARGET_CHAIN.name}.</span>
               <button className="btn btn-primary btn-sm" disabled={switching} onClick={() => switchChain({ chainId: TARGET_CHAIN.id })}>
                 {switching ? 'Switching…' : `Switch to ${TARGET_CHAIN.name}`}
               </button>
@@ -160,7 +160,7 @@ export default function TradeApp() {
           )}
           {!CONTRACTS_CONFIGURED && (
             <div className="banner info">
-              <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}><Info size={16} color="#C6FF3D" /> Preview mode — contracts not configured, trades are simulated locally. {live ? 'Live index data.' : 'Index data is simulated.'}</span>
+              <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}><Info size={16} color="#FFFFFF" /> Preview mode — contracts not configured, trades are simulated locally. {live ? 'Live index data.' : 'Index data is simulated.'}</span>
             </div>
           )}
 
@@ -194,7 +194,7 @@ export default function TradeApp() {
                 <div style={{ marginTop: 18 }}>
                   {values.length > 1 ? (
                     <AreaChart key={`${selected}-${range}`} values={values} height={300}
-                      markers={marginNum > 0 ? [{ value: liq, label: 'liq', color: '#FF5C7A' }] : undefined} />
+                      markers={marginNum > 0 ? [{ value: liq, label: 'liq', color: '#7D7D7D' }] : undefined} />
                   ) : <div style={{ height: 300 }} />}
                 </div>
                 <div className="chart-foot" style={{ gridTemplateColumns: 'repeat(4, minmax(0,1fr))' }}>
@@ -241,7 +241,7 @@ export default function TradeApp() {
             {/* Order + balance */}
             <div style={{ display: 'grid', gap: 14 }}>
               <section className="glass panel" id="vault">
-                <div className="panel-title">Shielded balance <ShieldCheck size={14} color="#C6FF3D" /></div>
+                <div className="panel-title">Shielded balance <ShieldCheck size={14} color="#FFFFFF" /></div>
                 <div className="bal">
                   {shieldKey || !isConnected ? <span className="mono">{shielded.toFixed(2)}</span> : <span className="redact" style={{ width: 110, height: 26 }} />}
                   <span className="muted" style={{ fontSize: 15, fontWeight: 500 }}>USDT</span>
@@ -283,7 +283,7 @@ export default function TradeApp() {
                   <div><span>Max payout (10×)</span><span>{maxPayout.toFixed(2)} USDT</span></div>
                 </div>
                 <button className="btn btn-primary wide" disabled={busy} onClick={openPosition}
-                  style={!isLong && isConnected && !wrongNetwork ? { background: 'var(--down)', color: '#1a0308', boxShadow: '0 10px 40px -10px rgba(255,92,122,.6)' } : undefined}>
+                  style={!isLong && isConnected && !wrongNetwork ? { background: 'var(--down)', color: '#000000', boxShadow: '0 10px 40px -10px rgba(125,125,125,.6)' } : undefined}>
                   <Lock size={16} /> {cta}
                 </button>
                 <div className="note"><EyeOff size={13} style={{ flex: 'none', marginTop: 2 }} /> Side and leverage are hidden by a zero-knowledge proof generated in your browser. Only market and margin are public.</div>
@@ -329,7 +329,7 @@ function BalanceModal({ kind, max, onClose, onConfirm }: { kind: 'deposit' | 'wi
   const invalid = n <= 0 || (max !== undefined && n > max)
   return (
     <motion.div className="modal-bg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
-      <motion.div className="glass modal" initial={{ y: 20, scale: 0.97 }} animate={{ y: 0, scale: 1 }} exit={{ y: 20, scale: 0.97 }} onClick={(e) => e.stopPropagation()} style={{ background: '#0E1014' }}>
+      <motion.div className="glass modal" initial={{ y: 20, scale: 0.97 }} animate={{ y: 0, scale: 1 }} exit={{ y: 20, scale: 0.97 }} onClick={(e) => e.stopPropagation()} style={{ background: '#0A0A0A' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ margin: 0, fontFamily: 'var(--display)', letterSpacing: '-0.02em' }}>{kind === 'deposit' ? 'Deposit to shielded balance' : 'Withdraw from shielded balance'}</h3>
           <button onClick={onClose} aria-label="Close"><X size={18} /></button>

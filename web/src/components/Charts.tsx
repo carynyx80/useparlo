@@ -20,8 +20,8 @@ export function Sparkline({ values, up, width = 120, height = 40 }: { values: nu
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-hidden style={{ display: 'block' }}>
       <defs>
         <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor={up ? '#C6FF3D' : '#FF5C7A'} stopOpacity="0.25" />
-          <stop offset="1" stopColor={up ? '#C6FF3D' : '#FF5C7A'} stopOpacity="0" />
+          <stop offset="0" stopColor={up ? '#FFFFFF' : '#7D7D7D'} stopOpacity="0.25" />
+          <stop offset="1" stopColor={up ? '#FFFFFF' : '#7D7D7D'} stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={area} fill={`url(#${id})`} />
@@ -65,8 +65,8 @@ export function AreaChart({
     <svg width="100%" height={height} viewBox={`0 0 ${W} ${height}`} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }} aria-label="Attention index chart">
       <defs>
         <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor="#C6FF3D" stopOpacity="0.28" />
-          <stop offset="1" stopColor="#C6FF3D" stopOpacity="0" />
+          <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.28" />
+          <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
         </linearGradient>
       </defs>
       {showGrid &&
@@ -88,7 +88,7 @@ export function AreaChart({
       <motion.path
         d={line}
         fill="none"
-        stroke="#C6FF3D"
+        stroke="#FFFFFF"
         strokeWidth="2"
         vectorEffect="non-scaling-stroke"
         strokeLinejoin="round"
@@ -101,7 +101,7 @@ export function AreaChart({
           cx={last[0]}
           cy={last[1]}
           r="4"
-          fill="#C6FF3D"
+          fill="#FFFFFF"
           initial={animate ? { scale: 0 } : false}
           animate={{ scale: 1 }}
           transition={{ delay: 1.5 }}

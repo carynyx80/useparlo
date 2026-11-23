@@ -132,7 +132,7 @@ function Hero() {
 function HowItWorks() {
   const steps = [
     { icon: <Shield size={22} />, t: 'Shield USDT', d: 'Deposit BSC USDT into your shielded balance. A key derived from one wallet signature controls it — nobody else can link it to you.' },
-    { icon: <Radar size={22} />, t: 'Pick a narrative', d: 'Every market tracks an attention index built from X, Reddit, Farcaster and CoinGecko trending — updated on-chain every epoch.' },
+    { icon: <Radar size={22} />, t: 'Pick a narrative', d: 'Every market tracks an attention index built from Reddit, Farcaster and CoinGecko trending — updated on-chain every epoch.' },
     { icon: <Zap size={22} />, t: 'Go long or short', d: 'Choose 1–20x. Your browser generates a zero-knowledge proof, so side and leverage never touch the chain in the clear.' },
   ]
   return (
@@ -255,7 +255,7 @@ function VaultSection() {
       <div className="container">
         <Reveal>
           <div className="glass vault">
-            <div className="glow" style={{ width: 400, height: 400, bottom: -200, left: -100, background: 'radial-gradient(closest-side, rgba(198,255,61,.16), transparent)' }} />
+            <div className="glow" style={{ width: 400, height: 400, bottom: -200, left: -100, background: 'radial-gradient(closest-side, rgba(255,255,255,.16), transparent)' }} />
             <div style={{ position: 'relative' }}>
               <span className="eyebrow">Liquidity vault</span>
               <h2 className="h2">Be the house.</h2>
@@ -278,7 +278,7 @@ function VaultSection() {
 }
 
 const FAQS = [
-  { q: 'What is an attention perp?', a: 'A leveraged position on an attention index — a score measuring how much a token, topic or person is being talked about across X, Reddit, Farcaster and CoinGecko trending. If you think a narrative is about to blow up, go long. If you think it has peaked, go short.' },
+  { q: 'What is an attention perp?', a: 'A leveraged position on an attention index — a score measuring how much a token, topic or person is being talked about across Reddit, Farcaster and CoinGecko trending. If you think a narrative is about to blow up, go long. If you think it has peaked, go short.' },
   { q: 'How is my position private?', a: 'Your USDT sits in a shielded pool as encrypted notes. When you open a position your browser generates a Groth16 zero-knowledge proof that you own enough balance and that your hidden side and leverage are valid. The chain only sees the market id and margin.' },
   { q: 'What leverage and fees apply?', a: 'Leverage from 1x to 20x. A 0.1% fee on notional is charged on open and another 0.1% on close. Profits are capped at 10× your margin per position.' },
   { q: 'How do liquidations work?', a: 'A long is knocked out if the index trades at or below entry × (1 − 0.9 / leverage) during its lifetime; a short if it reaches entry × (1 + 0.9 / leverage). Positions run for up to 16 epochs.' },
@@ -327,7 +327,7 @@ function CtaBand() {
           <div className="glass cta-band">
             <div className="glow glow-a" style={{ top: -260 }} />
             <div style={{ position: 'relative' }}>
-              <span className="pill"><Sparkles size={14} color="#C6FF3D" /> The timeline is the chart</span>
+              <span className="pill"><Sparkles size={14} color="#FFFFFF" /> The timeline is the chart</span>
               <h2 className="h2" style={{ marginTop: 24 }}>Front-run the <span style={{ color: 'var(--accent)' }}>narrative.</span></h2>
               <p className="lead" style={{ margin: '0 auto 32px' }}>Open your first private position in under a minute.</p>
               <Link to="/app" className="btn btn-primary">Launch app <ArrowRight size={17} /></Link>
