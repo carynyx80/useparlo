@@ -7,7 +7,7 @@ import { useConnectModal } from '@rainbow-me/rainbowkit'
 import { AlertTriangle, ArrowDownToLine, ArrowUpFromLine, Coins, EyeOff, Info, KeyRound, Loader2, Lock, RefreshCw, ShieldCheck, X } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import { AreaChart } from '../components/Charts'
-import { fetchHistory, fetchMarkets, fmtUsd, MOCK_MARKETS, type HistoryPoint, type Market } from '../lib/api'
+import { fetchHistory, fetchMarkets, fetchTradingStatus, fmtUsd, MOCK_MARKETS, type HistoryPoint, type Market } from '../lib/api'
 import { IS_LOCAL_CHAIN, TARGET_CHAIN } from '../lib/wagmi'
 import { CONTRACTS_CONFIGURED, FEE_BPS_CLOSE, FEE_BPS_OPEN, INDEX_SCALE, MAX_LEVERAGE, PROFIT_CAP_MULTIPLE, USDT_ADDRESS, erc20Abi, liquidationLevel } from '../lib/contracts'
 import { SHIELDED_ACCOUNT_MESSAGE, type OwnedPosition, type PositionStatus } from '../lib/zk'
@@ -45,7 +45,17 @@ export default function TradeApp() {
 
   // Real mode (contracts configured): balances/positions come from the shielded-account scan.
   const sh = useShielded()
-  const real = CONTRACTS_CONFIGURED
+  // Contracts deployed AND reporter + relayer running. Otherwise stay simulated so no real funds can get stuck.
+  const [trading, setTrading] = useState<{ live: boolean; reason: string } | null>(null)
+  useEffect(() => {
+    if (!CONTRACTS_CONFIGURED) return
+    let alive = true
+    const load = () => fetchTradingStatus().then((s) => alive && setTrading(s))
+    load()
+    const t = setInterval(load, 60_000)
+    return () => { alive = false; clearInterval(t) }
+  }, [])
+  const real = CONTRACTS_CONFIGURED && !!trading?.live
   // Simulated preview mode (VITE_POOL_ADDRESS unset): local-only state.
   const [simUnlocked, setSimUnlocked] = useState(false)
   const [simShielded, setSimShielded] = useState(0)
@@ -198,6 +208,11 @@ export default function TradeApp() {
               <button className="btn btn-primary btn-sm" disabled={switching} onClick={() => switchChain({ chainId: TARGET_CHAIN.id })}>
                 {switching ? 'Switching…' : `Switch to ${TARGET_CHAIN.name}`}
               </button>
+            </div>
+          )}
+          {CONTRACTS_CONFIGURED && trading && !trading.live && (
+            <div className="banner info">
+              <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}><Info size={16} color="#FFFFFF" /> Parlo is deployed on BNB Chain mainnet. Real-money trading opens soon — {trading.reason}. Until then trades here are simulated. {live ? 'Live index data.' : 'Index data is simulated.'}</span>
             </div>
           )}
           {!CONTRACTS_CONFIGURED && (

@@ -125,6 +125,26 @@ export async function fetchMarkets(): Promise<{ markets: Market[]; live: boolean
   }
 }
 
+/** Real-money trading is only safe when the oracle reporter and the relayer are both running. */
+export type TradingStatus = { live: boolean; reason: string }
+export async function fetchTradingStatus(): Promise<TradingStatus> {
+  try {
+    const h = await getJSON<{
+      relayer?: { configured?: boolean; vkeys?: Record<string, boolean> }
+      reporter?: { configured?: boolean; lastRunAt?: number | null; error?: string | null }
+    }>('/health')
+    const vk = h.relayer?.vkeys ?? {}
+    const relayerOk = !!h.relayer?.configured && !!vk.transact && !!vk.open && !!vk.close
+    const lastRun = h.reporter?.lastRunAt ?? 0
+    const reporterOk = !!h.reporter?.configured && !h.reporter?.error && Date.now() / 1000 - lastRun < 15 * 60
+    if (relayerOk && reporterOk) return { live: true, reason: '' }
+    const missing = [!reporterOk && 'oracle reporter', !relayerOk && 'relayer'].filter(Boolean).join(' and ')
+    return { live: false, reason: `the ${missing} ${missing.includes(' and ') ? 'are' : 'is'} not running yet` }
+  } catch {
+    return { live: false, reason: 'the Parlo API is unreachable' }
+  }
+}
+
 export async function fetchHistory(id: number, range = '24h'): Promise<{ points: HistoryPoint[]; live: boolean }> {
   try {
     const data = await getJSON<unknown>(`/markets/${id}/history?range=${range}`)
