@@ -107,8 +107,9 @@ function normMarket(raw: Record<string, unknown>): Market {
     name: String(raw.name ?? raw.symbol ?? fallback?.name ?? ''),
     value,
     change24h: Number(raw.change24h ?? raw.change ?? fallback?.change24h ?? 0),
-    volume24h: Number(raw.volume24h ?? fallback?.volume24h ?? 0),
-    mentions24h: Number(raw.mentions24h ?? fallback?.mentions24h ?? 0),
+    // Live data: never borrow mock volume/mentions; show only what the backend reports.
+    volume24h: Number(raw.volume24h ?? 0),
+    mentions24h: Number(raw.mentions24h ?? 0),
     sparkline: Array.isArray(raw.sparkline) ? (raw.sparkline as unknown[]).map(scaled) : fallback?.sparkline ?? [value],
   }
 }
