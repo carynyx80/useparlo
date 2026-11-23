@@ -79,7 +79,7 @@ input { font: inherit; color: inherit; }
 .nav.scrolled { background: rgba(0,0,0,.72); backdrop-filter: blur(18px) saturate(140%); border-color: var(--border); }
 .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 68px; gap: 16px; }
 .logo { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: -0.03em; }
-.logo-mark { width: 30px; height: 30px; border-radius: 9px; background: #111111; border: 1px solid var(--border-2); display: grid; place-items: center; }
+.logo-mark { width: 30px; height: 30px; border-radius: 8px; background: #FFFFFF; display: grid; place-items: center; overflow: hidden; }
 .nav-links { display: flex; gap: 28px; font-size: 14px; color: var(--muted); }
 .nav-links a:hover { color: var(--text); }
 .nav-right { display: flex; align-items: center; gap: 10px; }
