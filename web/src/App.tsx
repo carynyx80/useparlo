@@ -3,6 +3,8 @@ import { Route, Routes } from 'react-router-dom'
 import Landing from './pages/Landing'
 
 const TradeApp = lazy(() => import('./pages/TradeApp'))
+// Dev-only: browser-wallet deploy tool. Never included in production builds.
+const DeployTool = import.meta.env.DEV ? lazy(() => import('./pages/DeployTool')) : null
 
 export default function App() {
   return (
@@ -34,6 +36,9 @@ export default function App() {
             </Suspense>
           }
         />
+        {DeployTool && (
+          <Route path="/deploy" element={<Suspense fallback={null}><DeployTool /></Suspense>} />
+        )}
         <Route path="*" element={<Landing />} />
       </Routes>
     </>
