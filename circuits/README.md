@@ -27,10 +27,17 @@ Hashes, public-input order and the math follow `../SPEC.md` exactly.
 | `test/fixtures.mjs` | writes `contracts/test/fixtures/{transact,open,close}.json` |
 
 ```bash
-./build.sh                 # ~5 min the first time (ptau), then ~2-3 min
+./build.sh                 # first run also builds the 2^16 ptau (~25 min on 8 cores); then ~4-5 min
 npm test                   # node --test test/*.test.mjs
 npm run fixtures           # regenerate contract fixtures
 ```
+
+## Sizes (circom --O2, Apple Silicon, Node 22)
+| circuit | constraints | public | prove (snarkjs fullProve, Node) | on-chain verify gas |
+|---|---|---|---|---|
+| transact | 11,977 | 7 | ~1.4 s | ~235k |
+| open | 6,612 | 7 | ~1.0 s | ~235k |
+| close | 12,961 | 56 | ~1.0-1.7 s | ~574k |
 
 ## Public inputs (order is binding)
 - **transact** `[root, publicAmount, extDataHash, inNullifier0, inNullifier1, outCommitment0, outCommitment1]`
