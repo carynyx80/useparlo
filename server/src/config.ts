@@ -42,7 +42,6 @@ const EnvSchema = z.object({
   // Pool / relayer
   POOL_ADDRESS: address,
   POOL_DEPLOY_BLOCK: z.coerce.bigint().default(0n),
-  POOL_ABI_PATH: optStr,
   LOG_CHUNK_SIZE: z.coerce.bigint().default(5000n),
   POOL_SYNC_INTERVAL_SEC: z.coerce.number().int().positive().default(15),
   RELAYER_PRIVATE_KEY: hexKey,

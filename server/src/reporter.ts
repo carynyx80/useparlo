@@ -29,7 +29,7 @@ export class Reporter {
     const oracle = config.ORACLE_ADDRESS as Hex;
     for (const e of [epoch, epoch - 1n, epoch - 2n]) {
       if (e < 0n) break;
-      const [close] = await publicClient.readContract({ address: oracle, abi: ORACLE_ABI, functionName: "getEpoch", args: [BigInt(marketId), e] });
+      const [close] = (await publicClient.readContract({ address: oracle, abi: ORACLE_ABI, functionName: "getEpoch", args: [BigInt(marketId), e] })) as readonly [bigint, bigint, bigint, boolean];
       if (close > 0n) return close;
     }
     return 0n;

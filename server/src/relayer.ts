@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import * as snarkjs from "snarkjs";
 import { BaseError, ContractFunctionRevertedError, encodeAbiParameters, isAddress, isHex, keccak256, type Hex } from "viem";
 import { z } from "zod";
-import { poolAbi } from "./abi.js";
+import { ORACLE_ABI, poolAbi } from "./abi.js";
 import { Mutex, publicClient, walletFor } from "./chain.js";
 import { config } from "./config.js";
 import { logger } from "./logger.js";
@@ -61,8 +61,8 @@ const TransactExt = z.object({
   extAmount: signedInt,
   relayer: addr,
   fee: signedInt.refine((v) => v >= 0n, "fee must be >= 0"),
+  encryptedOutput0: hexBytes,
   encryptedOutput1: hexBytes,
-  encryptedOutput2: hexBytes,
 });
 const OpenExt = z.object({ encryptedChange: hexBytes, encryptedPosition: hexBytes }).default({ encryptedChange: "0x", encryptedPosition: "0x" });
 const CloseExt = z.object({ encryptedOutput: hexBytes }).default({ encryptedOutput: "0x" });
@@ -161,7 +161,7 @@ function toSolidityProof(p: RelayBodyT["proof"]) {
 export function extDataHash(e: z.infer<typeof TransactExt>): bigint {
   const enc = encodeAbiParameters(
     [{ type: "address" }, { type: "int256" }, { type: "address" }, { type: "uint256" }, { type: "bytes" }, { type: "bytes" }],
-    [e.recipient as Hex, e.extAmount, e.relayer as Hex, e.fee, e.encryptedOutput1 as Hex, e.encryptedOutput2 as Hex],
+    [e.recipient as Hex, e.extAmount, e.relayer as Hex, e.fee, e.encryptedOutput0 as Hex, e.encryptedOutput1 as Hex],
   );
   return BigInt(keccak256(enc)) % FIELD_P;
 }
@@ -175,13 +175,36 @@ export class Relayer {
     return this.signer?.account.address;
   }
 
+  /** closes[16] ++ lows[16] ++ highs[16] for the position window, from the oracle. */
+  private async oracleWindow(marketId: bigint, entryEpoch: bigint): Promise<bigint[]> {
+    if (!config.ORACLE_ADDRESS) throw new RelayError(503, "ORACLE_ADDRESS not configured (needed to verify close proofs)");
+    try {
+      const [closes, lows, highs] = (await publicClient.readContract({
+        address: config.ORACLE_ADDRESS as Hex,
+        abi: ORACLE_ABI,
+        functionName: "getWindow",
+        args: [marketId, entryEpoch],
+      })) as readonly [readonly bigint[], readonly bigint[], readonly bigint[]];
+      return [...closes, ...lows, ...highs];
+    } catch (err) {
+      throw new RelayError(502, `oracle.getWindow failed: ${err instanceof BaseError ? err.shortMessage : String(err)}`);
+    }
+  }
+
   async relay(circuit: Circuit, body: RelayBodyT): Promise<{ txHash: Hex }> {
     if (!this.configured || !this.signer) throw new RelayError(503, "relayer not configured");
     const vk = vkeys.get(circuit);
     if (!vk) throw new RelayError(503, `verification key for ${circuit} not available`);
     const n = N_PUBLIC[circuit];
-    if (body.publicSignals.length !== n) throw new RelayError(400, `expected ${n} public signals, got ${body.publicSignals.length}`);
-    const pub = body.publicSignals;
+    let pub = body.publicSignals;
+    // close: clients may send the 8 head signals or all 56; the 48 window values are always
+    // rebuilt from oracle.getWindow (same source the contract uses).
+    if (circuit === "close") {
+      if (pub.length !== 8 && pub.length !== n) throw new RelayError(400, `expected 8 or ${n} public signals, got ${pub.length}`);
+      pub = [...pub.slice(0, 8), ...(await this.oracleWindow(pub[3], pub[5]))];
+    } else if (pub.length !== n) {
+      throw new RelayError(400, `expected ${n} public signals, got ${pub.length}`);
+    }
 
     let args: unknown[];
     const proof = toSolidityProof(body.proof);
@@ -195,19 +218,44 @@ export class Relayer {
           throw new RelayError(400, `ext.relayer must be ${this.signer.account.address}`);
         if (ext.fee < config.MIN_RELAYER_FEE) throw new RelayError(400, `fee below minimum ${config.MIN_RELAYER_FEE}`);
       }
-      args = [proof, pub, ext];
+      const txArgs = {
+        root: pub[0],
+        publicAmount: pub[1],
+        extDataHash: pub[2],
+        inputNullifiers: [pub[3], pub[4]],
+        outputCommitments: [pub[5], pub[6]],
+      };
+      args = [proof, txArgs, ext];
     } else if (circuit === "open") {
       const parsed = OpenExt.safeParse(body.ext);
       if (!parsed.success) throw new RelayError(400, "invalid ext for open");
-      args = [proof, pub, parsed.data.encryptedChange, parsed.data.encryptedPosition];
+      const openArgs = {
+        root: pub[0],
+        inNullifier: pub[1],
+        changeCommitment: pub[2],
+        positionCommitment: pub[3],
+        marketId: pub[4],
+        margin: pub[5],
+        epoch: pub[6],
+      };
+      args = [proof, openArgs, parsed.data.encryptedChange, parsed.data.encryptedPosition];
     } else {
       const parsed = CloseExt.safeParse(body.ext);
       if (!parsed.success) throw new RelayError(400, "invalid ext for close");
-      // closes/lows/highs (pub[8..55]) are filled by the contract from oracle storage.
-      args = [proof, pub.slice(0, 8), parsed.data.encryptedOutput];
+      const closeArgs = {
+        positionRoot: pub[0],
+        positionNullifier: pub[1],
+        outCommitment: pub[2],
+        marketId: pub[3],
+        margin: pub[4],
+        entryEpoch: pub[5],
+        closeOffset: pub[6],
+        payout: pub[7],
+      };
+      args = [proof, closeArgs, parsed.data.encryptedOutput];
     }
 
-    const ok = await snarkjs.groth16.verify(vk.vk, pub.map(String), toSnarkjsProof(body.proof));
+    const ok = await snarkjs.groth16.verify(vk.vk, pub.map((x) => x.toString()), toSnarkjsProof(body.proof));
     if (!ok) throw new RelayError(400, "invalid proof");
 
     const functionName = circuit === "transact" ? "transact" : circuit === "open" ? "openPosition" : "closePosition";
