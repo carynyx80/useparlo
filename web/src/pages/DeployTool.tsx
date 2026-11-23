@@ -14,6 +14,7 @@ import {
 } from 'viem'
 import { bsc, foundry } from 'viem/chains'
 import artifacts from '../deploy/artifacts.json'
+import GoLive from './GoLive'
 
 /**
  * Dev-only deploy tool: deploys Parlo from the user's own browser wallet (MetaMask / Trust / Binance
@@ -21,6 +22,12 @@ import artifacts from '../deploy/artifacts.json'
  */
 
 const COMPANY = getAddress('0xB34296465F18F55003100e925aBc70656E224035')
+/** BNB Chain mainnet deployment (contracts/deployments/56.json). */
+const MAINNET = {
+  oracle: getAddress('0x39ca194a97e60f0fa45f2683c9de3d4d1ac0314a'),
+  vault: getAddress('0x6c063cde3408d6075b3ddccbbcb79fc91d625c2b'),
+  usdt: getAddress('0x55d398326f99059fF775485246999027B3197955'),
+}
 const BSC_USDT = getAddress('0x55d398326f99059fF775485246999027B3197955')
 const EPOCH_LENGTH = 300n
 const MARKETS: Array<[bigint, string]> = [
@@ -296,6 +303,15 @@ export default function DeployTool() {
       )}
       {status && <p style={{ marginTop: 14 }}>{status}</p>}
       {error && <p role="alert" style={{ marginTop: 14, color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 12, padding: 12 }}>{error}</p>}
+
+      {(targetKey === 'bsc' || allDone) && (
+        <GoLive
+          target={{ chain: t.chain, rpc: t.rpc, gasPrice: t.gasPrice, explorer: t.explorer, apiUrl: targetKey === 'bsc' ? 'https://api.useparlo.xyz' : 'http://127.0.0.1:8090' }}
+          account={account}
+          company={targetKey === 'bsc' ? COMPANY : (account ?? COMPANY)}
+          addrs={targetKey === 'bsc' ? MAINNET : { oracle: getAddress(progress.oracle), vault: getAddress(progress.vault), usdt: getAddress(progress.usdt) }}
+        />
+      )}
 
       {allDone && (
         <div className="glass" style={{ padding: 20, borderRadius: 20, marginTop: 20 }}>
