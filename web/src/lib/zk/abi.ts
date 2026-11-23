@@ -25,6 +25,8 @@ export const poolAbi = parseAbi([
   'event NewNote(uint256 commitment, uint256 index, bytes encryptedOutput)',
   'event NewPosition(uint256 commitment, uint256 index, bytes encryptedOutput)',
   'event NullifierSpent(uint256 nullifier)',
+  'event PositionOpened(uint256 indexed marketId, uint256 indexed epoch, uint256 margin, uint256 positionIndex)',
+  'event PositionClosed(uint256 indexed marketId, uint256 indexed entryEpoch, uint256 margin, uint256 closeOffset, uint256 payout)',
 ])
 
 export const oracleAbi = parseAbi([

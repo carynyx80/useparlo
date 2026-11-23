@@ -2,6 +2,7 @@
 export * from './field.ts'
 export * from './keys.ts'
 export * from './note.ts'
+export * from './derive.ts'
 export * from './merkle.ts'
 export * from './payout.ts'
 export * from './inputs.ts'

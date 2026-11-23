@@ -4,6 +4,7 @@ import { oracleAbi, poolAbi } from './abi.ts'
 import { encryptNote, encryptPosition } from './encryption.ts'
 import { extDataHash, type ExtData } from './extdata.ts'
 import { randomField } from './field.ts'
+import { closeBlinding, openBlindings } from './derive.ts'
 import { buildCloseInput, buildOpenInput, buildTransactInput, type CircuitInput } from './inputs.ts'
 import type { Keypair } from './keys.ts'
 import { computeClose, WINDOW, type CloseResult } from './payout.ts'
@@ -198,9 +199,21 @@ export async function withdraw(
 
 export type OpenParams = { marketId: number | bigint; isLong: boolean; margin: bigint; leverage: number | bigint }
 
-export async function openPosition(
-  ctx: ZkContext, kp: Keypair, scan: ScanResult, params: OpenParams, onStep?: StepFn,
-): Promise<{ txHash: Hex; positionCommitment: bigint; changeCommitment: bigint; epoch: bigint }> {
+export type PreparedOpen = {
+  sol: SolidityProof
+  publicSignals: string[]
+  encryptedChange: Hex
+  encryptedPosition: Hex
+  epoch: bigint
+  positionCommitment: bigint
+  changeCommitment: bigint
+}
+
+/**
+ * Build + prove an open for the current epoch (waits out epoch boundaries). Change/position blindings are
+ * derived from (privKey, inNullifier) so both notes stay recoverable even if the ciphertexts are garbled.
+ */
+export async function prepareOpen(ctx: ZkContext, kp: Keypair, scan: ScanResult, params: OpenParams, onStep?: StepFn): Promise<PreparedOpen> {
   const { marketId, isLong, margin, leverage } = params
   const L = BigInt(leverage)
   if (L < 1n || L > 20n) throw new Error('Leverage must be 1–20')
@@ -210,6 +223,7 @@ export async function openPosition(
   if (!note) {
     throw new Error(scan.balance >= margin ? 'No single note covers this margin. Withdraw/redeposit to merge notes, or lower the margin.' : 'Insufficient shielded balance — deposit USDT first.')
   }
+  const { change: changeBlinding, position: positionBlinding } = openBlindings(kp.privKey, note.nullifier)
 
   for (let attempt = 0; attempt < 3; attempt++) {
     const { epoch } = await epochWithRoom(ctx, onStep)
@@ -222,12 +236,11 @@ export async function openPosition(
     if (lastValue === 0n || lastEpoch + 1n < epoch) {
       throw new Error('The on-chain index for this market is stale (no oracle update in the last epoch). Try again in a moment.')
     }
-    const changeBlinding = randomField()
-    const positionBlinding = randomField()
     const built = buildOpenInput({
       privKey: kp.privKey, tree: scan.noteTree, note: { amount: note.amount, blinding: note.blinding, index: note.index },
       marketId, margin, epoch, isLong, leverage: L, changeBlinding, positionBlinding,
     })
+    if (built.inNullifier !== note.nullifier) throw new Error('internal: nullifier mismatch')
     const encryptedChange = await encryptNote(kp.privKey, { amount: built.changeNote.amount, blinding: changeBlinding })
     const encryptedPosition = await encryptPosition(kp.privKey, {
       marketId: BigInt(marketId), isLong, margin, leverage: L, entryEpoch: epoch, blinding: positionBlinding,
@@ -235,13 +248,31 @@ export async function openPosition(
     onStep?.(STEP.prove)
     const { sol, publicSignals } = await proveCircuit(ctx, 'open', built.input)
     if ((await currentEpoch(ctx)) !== epoch) continue // crossed the boundary while proving: redo for the new epoch
-    onStep?.(STEP.relay)
-    const txHash = await relay(ctx.apiUrl, 'open', { proof: sol, publicSignals, ext: { encryptedChange, encryptedPosition } })
-    onStep?.(STEP.mining)
-    await waitForSuccess(ctx, txHash)
-    return { txHash, positionCommitment: built.position.commitment, changeCommitment: built.changeNote.commitment, epoch }
+    return { sol, publicSignals, encryptedChange, encryptedPosition, epoch, positionCommitment: built.position.commitment, changeCommitment: built.changeNote.commitment }
   }
   throw new Error('Epoch boundary kept moving while proving; please retry.')
+}
+
+/** pool.openPosition calldata args for a prepared open (for direct submission). */
+export function openCallArgs(p: Pick<PreparedOpen, 'sol' | 'publicSignals'>, encryptedChange: Hex, encryptedPosition: Hex) {
+  const ps = p.publicSignals.map(BigInt)
+  return [
+    proofToContract(p.sol),
+    { root: ps[0], inNullifier: ps[1], changeCommitment: ps[2], positionCommitment: ps[3], marketId: ps[4], margin: ps[5], epoch: ps[6] },
+    encryptedChange,
+    encryptedPosition,
+  ] as const
+}
+
+export async function openPosition(
+  ctx: ZkContext, kp: Keypair, scan: ScanResult, params: OpenParams, onStep?: StepFn,
+): Promise<{ txHash: Hex; positionCommitment: bigint; changeCommitment: bigint; epoch: bigint }> {
+  const p = await prepareOpen(ctx, kp, scan, params, onStep)
+  onStep?.(STEP.relay)
+  const txHash = await relay(ctx.apiUrl, 'open', { proof: p.sol, publicSignals: p.publicSignals, ext: { encryptedChange: p.encryptedChange, encryptedPosition: p.encryptedPosition } })
+  onStep?.(STEP.mining)
+  await waitForSuccess(ctx, txHash)
+  return { txHash, positionCommitment: p.positionCommitment, changeCommitment: p.changeCommitment, epoch: p.epoch }
 }
 
 // ------------------------------------------------------------------ position status / close
@@ -289,9 +320,19 @@ export async function positionStatus(ctx: ZkContext, pos: OwnedPosition): Promis
   return { currentEpoch: cur, entry, closeOffset, deadlineEpoch, expired: cur >= deadlineEpoch, mark, settle, live }
 }
 
-export async function closePosition(
-  ctx: ZkContext, kp: Keypair, scan: ScanResult, pos: OwnedPosition, onStep?: StepFn,
-): Promise<{ txHash: Hex; payout: bigint; outCommitment: bigint; knockedOut: boolean; closeOffset: number }> {
+export type PreparedClose = {
+  sol: SolidityProof
+  publicSignals: string[]
+  encryptedOutput: Hex
+  payout: bigint
+  outCommitment: bigint
+  knockedOut: boolean
+  closeOffset: number
+}
+
+/** Build + prove a close at the latest accepted closeOffset. payoutBlinding = Poseidon(privKey, positionNullifier, 3). */
+export async function prepareClose(ctx: ZkContext, kp: Keypair, scan: ScanResult, pos: OwnedPosition, onStep?: StepFn): Promise<PreparedClose> {
+  const outBlinding = closeBlinding(kp.privKey, pos.nullifier)
   for (let attempt = 0; attempt < 3; attempt++) {
     const { epoch } = await epochWithRoom(ctx, onStep)
     if (epoch >= pos.entryEpoch + CLOSE_DEADLINE_EPOCHS) throw new Error('Close deadline passed (entry epoch + 18).')
@@ -302,7 +343,6 @@ export async function closePosition(
     const [closesR, lowsR, highsR] = await ctx.publicClient.readContract({
       address: ctx.oracle, abi: oracleAbi, functionName: 'getWindow', args: [pos.marketId, pos.entryEpoch],
     })
-    const outBlinding = randomField()
     const built = buildCloseInput({
       privKey: kp.privKey,
       tree: scan.positionTree,
@@ -313,16 +353,34 @@ export async function closePosition(
       highs: [...highsR],
       outBlinding,
     })
+    if (built.positionNullifier !== pos.nullifier) throw new Error('internal: nullifier mismatch')
     const encryptedOutput = await encryptNote(kp.privKey, { amount: built.payout, blinding: outBlinding })
     onStep?.(STEP.prove)
     const { sol, publicSignals } = await proveCircuit(ctx, 'close', built.input)
     // the window (public signals) changes when an epoch finalizes: redo if we crossed a boundary
     if ((await currentEpoch(ctx)) !== epoch) continue
-    onStep?.(STEP.relay)
-    const txHash = await relay(ctx.apiUrl, 'close', { proof: sol, publicSignals, ext: { encryptedOutput } })
-    onStep?.(STEP.mining)
-    await waitForSuccess(ctx, txHash)
-    return { txHash, payout: built.payout, outCommitment: built.outNote.commitment, knockedOut: built.knockedOut, closeOffset }
+    return { sol, publicSignals, encryptedOutput, payout: built.payout, outCommitment: built.outNote.commitment, knockedOut: built.knockedOut, closeOffset }
   }
   throw new Error('Epoch boundary kept moving while proving; please retry.')
+}
+
+/** pool.closePosition calldata args (head signals only; the contract reads the window from the oracle). */
+export function closeCallArgs(p: Pick<PreparedClose, 'sol' | 'publicSignals'>, encryptedOutput: Hex) {
+  const ps = p.publicSignals.map(BigInt)
+  return [
+    proofToContract(p.sol),
+    { positionRoot: ps[0], positionNullifier: ps[1], outCommitment: ps[2], marketId: ps[3], margin: ps[4], entryEpoch: ps[5], closeOffset: ps[6], payout: ps[7] },
+    encryptedOutput,
+  ] as const
+}
+
+export async function closePosition(
+  ctx: ZkContext, kp: Keypair, scan: ScanResult, pos: OwnedPosition, onStep?: StepFn,
+): Promise<{ txHash: Hex; payout: bigint; outCommitment: bigint; knockedOut: boolean; closeOffset: number }> {
+  const p = await prepareClose(ctx, kp, scan, pos, onStep)
+  onStep?.(STEP.relay)
+  const txHash = await relay(ctx.apiUrl, 'close', { proof: p.sol, publicSignals: p.publicSignals, ext: { encryptedOutput: p.encryptedOutput } })
+  onStep?.(STEP.mining)
+  await waitForSuccess(ctx, txHash)
+  return { txHash, payout: p.payout, outCommitment: p.outCommitment, knockedOut: p.knockedOut, closeOffset: p.closeOffset }
 }

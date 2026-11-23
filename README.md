@@ -63,7 +63,8 @@ forge script script/Deploy.s.sol --rpc-url bsc --broadcast --ledger --sender <de
    `POOL_DEPLOY_BLOCK` (from 56.json), plus the secrets `REPORTER_PRIVATE_KEY` and
    `RELAYER_PRIVATE_KEY` (a separate relayer wallet funded with BNB for gas).
 5. Frontend (Vercel → useparlo → Environment Variables): set `VITE_POOL_ADDRESS`,
-   `VITE_ORACLE_ADDRESS`, `VITE_VAULT_ADDRESS`, and optionally `VITE_WC_PROJECT_ID`
+   `VITE_ORACLE_ADDRESS`, `VITE_VAULT_ADDRESS`, `VITE_POOL_DEPLOY_BLOCK` (from 56.json — the
+   note-recovery scan starts here), and optionally `VITE_WC_PROJECT_ID`
    (WalletConnect/Reown), then redeploy.
 6. Seed the vault: deposit USDT into `LiquidityVault` so positions can open (the reserve check needs
    assets). Owner-only settings (caps, reporters, pause) are called from the company wallet.
