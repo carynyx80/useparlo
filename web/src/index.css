@@ -312,3 +312,9 @@ table.pos td { padding: 12px 8px; border-bottom: 1px solid var(--border); font-f
 @media (prefers-reduced-motion: reduce) {
   .rise, .rise-word { animation: none; }
 }
+
+/* private-trading step states */
+.step-line { display: flex; gap: 8px; align-items: center; margin-top: 12px; font-size: 13px; color: var(--muted); }
+.err-line { margin-top: 12px; font-size: 13px; color: var(--text); padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border-2); background: rgba(125,125,125,.1); word-break: break-word; }
+.spin { animation: parlo-spin 0.9s linear infinite; }
+@keyframes parlo-spin { to { transform: rotate(360deg); } }
