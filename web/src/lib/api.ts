@@ -80,7 +80,7 @@ export function mockHistory(id: number, points = 288): HistoryPoint[] {
   })
 }
 
-async function getJSON<T>(path: string, timeoutMs = 3500): Promise<T> {
+async function getJSON<T>(path: string, timeoutMs = 8000): Promise<T> {
   if (!API_URL) throw new Error('no api')
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), timeoutMs)
