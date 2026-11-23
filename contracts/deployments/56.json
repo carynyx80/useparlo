@@ -1,0 +1,17 @@
+{
+  "chainId": 56,
+  "startBlock": 135271730,
+  "epochLength": 300,
+  "owner": "0xB34296465F18F55003100e925aBc70656E224035",
+  "treasury": "0xB34296465F18F55003100e925aBc70656E224035",
+  "reporter": "0x0000000000000000000000000000000000000000",
+  "usdt": "0x55d398326f99059fF775485246999027B3197955",
+  "transactVerifier": "0x6a876a844e7ea145285ba644e94d9253308c4288",
+  "openVerifier": "0x25aec0001f8811a8bb6e12bc923931f92985196a",
+  "closeVerifier": "0x9fd99bd29b6bb6498da86bc29abe0973d4a6bad6",
+  "mockVerifiers": false,
+  "oracle": "0x39ca194a97e60f0fa45f2683c9de3d4d1ac0314a",
+  "vault": "0x6c063cde3408d6075b3ddccbbcb79fc91d625c2b",
+  "pool": "0x84ee34daed605b96b0de6286635249b6f2c8388e",
+  "poseidonT3": "0xcd4b571b6f04254a47df9d98db0d4c694925b408"
+}
